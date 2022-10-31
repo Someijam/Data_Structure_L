@@ -56,6 +56,33 @@ void iniMap()
     }
 }
 
+void addStation1(int lineNo,float prevDis,float nextDis,char *prevStName,char *currentStName)//在后面增加站点
+{
+
+}
+
+void addStation2(int lineNo,/*float prevDis=0,*/float nextDis,/*char *prevStName[30],*/char *currentStName)//在第一站前增加站点
+{
+
+}
+
+void deleteStation(int lineNo,char *stName)//删除lineNo号线的“stName”站点
+{
+
+}
+
+void printMetroLine(int lineNo)
+{
+    struct station *currentSt=metroMap.Line[lineNo].St1;
+    //struct station *p;
+    while ((*currentSt).next)
+    {
+        printf("%s %.2f ",(*currentSt).name,(*currentSt).dis);
+        currentSt=(*currentSt).next;
+    }
+    printf("%s",(*currentSt).name);
+}
+
 void printMap()
 {
     for(int i=0;i<metroMap.n;i++)
@@ -73,7 +100,7 @@ void printMap()
     }
 }
 
-void deleteMap()
+void deleteMap()//释放内存用
 {
     for(int i=0;i<metroMap.n;i++)
     {
@@ -92,7 +119,8 @@ int main(int argc, char const *argv[])
 {
     scanf("%d",&metroMap.n);
     iniMap();
-    printMap();
+
+    //printMap();
     deleteMap();
     return 0;
 }
