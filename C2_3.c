@@ -1,102 +1,103 @@
 /*
 Author:Someijam
-Date:2022/10/31
+Date:2022/11/01
 Problem description:
-第3关：从指定站点出发，计算出到另一个站点的最短路径
+第3关：计算最短路径
+*/
+/*
+4
+1 六渡桥 5.00 循礼门 4.00 大智路 4.00 三阳路 5.00 黄浦路 0 
+2 汉口火车站 10.00 范湖 2.00 王家墩东 2.00 青年路 4.00 中山公园 2.00 循礼门 2.00 江汉路 5.00 积玉桥 0 
+6 三眼桥 3.00 香港路 2.00 苗栗路 2.00 大智路 5.00 江汉路 1.00 汉正街 0 
+7 武汉商务区 1.00 王家墩东 2.00 取水楼 2.00 香港路 6.00 三阳路 9.00 徐家棚 3.00 三角路 3.00 三层楼 3.00 积玉桥 0
+青年路 积玉桥
 */
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
 
-struct station//站点
+struct section//称section为两站之间的一段线路
 {
-    struct station *prev;
-    char name[30];
-    float dis;
-    struct station *next;
+    float length;//长度
+    int targetIndex;//这条路线指向另一端的站点
+    struct section *sameSrcNextSec;//相同站点延伸出的下一条路线
 };
-struct line//地铁线路
-{
-    int lineNo;
-    struct station *St1;
-};
-struct map//地铁总图
-{
-    int n;
-    struct line Line[4];
-}metroMap;
 
-void iniMap()
+struct station
 {
-    for(int i=0;i<metroMap.n;i++)
+    char name[30];//站点名字
+    struct section *firstSection;//站点发散出的第一条路线
+}station[50];//全局存储图
+
+void deleteStations()
+{
+    for(int i=0;i<100;i++)
     {
-        scanf("%d",&(metroMap.Line[i].lineNo));
-        struct station *prev=NULL;
-        while (1)
+        struct section *toDelete=station[i].firstSection;
+        struct section *wayPoint=(*toDelete).sameSrcNextSec;
+        free(toDelete);
+        while (wayPoint)
         {
-            char currentStName[30];
-            float currentStDis;
-            scanf("%s %f",currentStName,&currentStDis);
-            struct station *currentSt=(struct station*)malloc(sizeof(struct station));
-            if(prev==NULL)metroMap.Line[i].St1=currentSt;
-            else 
-            {
-                (*currentSt).prev=prev;
-                (*currentSt).prev->next=currentSt;//上一站的下一站指向自己
-            }
-            (*currentSt).next=NULL;
-
-            strcpy((*currentSt).name,currentStName);
-            (*currentSt).dis=currentStDis;
-            
-            prev=currentSt;
-            if(currentStDis==0)break;
+            toDelete=wayPoint;
+            wayPoint=(*wayPoint).sameSrcNextSec;
+            free(toDelete);
         }
-        
     }
-}
-
-void printMap()
-{
-    for(int i=0;i<metroMap.n;i++)
-    {
-        printf("%d ",metroMap.Line[i].lineNo);
-        struct station *currentSt=metroMap.Line[i].St1;
-        //struct station *p;
-        while ((*currentSt).next)
-        {
-            printf("%s %.2f ",(*currentSt).name,(*currentSt).dis);
-            currentSt=(*currentSt).next;
-        }
-        printf("%s",(*currentSt).name);
-        printf("\n");
-    }
-}
-
-void deleteMap()
-{
-    for(int i=0;i<metroMap.n;i++)
-    {
-        struct station *currentSt=metroMap.Line[i].St1;
-        while ((*currentSt).next)
-        {
-            currentSt=(*currentSt).next;
-            free((*currentSt).prev);
-        }
-        free(currentSt);
-        //puts("OK");
-    }
+    puts("OK");
 }
 
 int main(int argc, char const *argv[])
 {
-    scanf("%d",&metroMap.n);
-    iniMap();
-    //printMap();
-    char st1[30];
-    char st2[30];
-    scanf("%s %s",st1,st2);
+    int lineNo;
+    int n;
+    scanf("%d",&n);
+    int prevStIndex=0;//上一站的下标
+    int prevSecLength=0;//上一条路线的长度
+    for(int currentIndex=0;currentIndex<100;currentIndex++)
+    {
+        if(prevSecLength==0)scanf("%d",&lineNo);
+        char name[30];
+        scanf("%s",name);
+        int isDuplicated=0;
+        int duplicatedIndex=-1;
+        for(int i=0;i<currentIndex;i++)//遍历之前存储的名字
+        {
+            if(!strcmp(name,station[i].name))
+            {
+                isDuplicated=1;
+                duplicatedIndex=i;
+                break;
+            }
+        }
+        if(isDuplicated)//已经有了
+        {
+            struct section *newSection = (struct section*)malloc(sizeof(struct section));
+            (*newSection).sameSrcNextSec=station[duplicatedIndex].firstSection;
+            station[duplicatedIndex].firstSection=newSection;
+            scanf("%f",&((*newSection).length));
+            prevSecLength=(*newSection).length;
+            if(prevStIndex>=0/*避免第一个越界*/)station[prevStIndex].firstSection->targetIndex=duplicatedIndex;
+            prevStIndex=duplicatedIndex;
+            currentIndex--;
+        }
+        else//还没有
+        {
+            strcpy(station[currentIndex].name,name);
+            struct section *newSection = (struct section*)malloc(sizeof(struct section));
+            station[currentIndex].firstSection=newSection;
+            scanf("%f",&((*newSection).length));
+            prevSecLength=(*newSection).length;
+            (*newSection).sameSrcNextSec=NULL;
+            (*newSection).targetIndex=-1;
+            //?if((*newSection).length!=0)(*newSection).targetIndex=currentIndex+1;
+            if(prevStIndex>=0)station[prevStIndex].firstSection->targetIndex=currentIndex;//之前一站最近添加的section是firstSection
+            prevStIndex=currentIndex;
+        }
+    }
+    char startStationName[30];
+    char destStationName[30];
+    scanf("%s %s",startStationName,destStationName);
+
     
-    deleteMap();
     return 0;
 }
