@@ -16,10 +16,13 @@ Problem description:
 #include<stdlib.h>
 #include<string.h>
 
+int INF=0x3F3F3F3F;//Perfect infinity! inf+inf=inf,inf+i=inf
+
 struct section//称section为两站之间的一段线路
 {
     float length;//长度
     int targetIndex;//这条路线指向另一端的站点
+    int srcIndex;//发散出这条路线的站点
     struct section *sameSrcNextSec;//相同站点延伸出的下一条路线
 };
 
@@ -29,21 +32,21 @@ struct station
     struct section *firstSection;//站点发散出的第一条路线
 }station[50];//全局存储图
 
-void deleteStations()
+void deleteStations()//删除整个邻接表，释放空间
 {
-    for(int i=0;i<100;i++)
+    for(int i=0;station[i].name[0]!=0;i++)
     {
-        struct section *toDelete=station[i].firstSection;
-        struct section *wayPoint=(*toDelete).sameSrcNextSec;
-        free(toDelete);
-        while (wayPoint)
+        struct section *q=station[i].firstSection;
+        struct section *p=q;
+        while (q->sameSrcNextSec)
         {
-            toDelete=wayPoint;
-            wayPoint=(*wayPoint).sameSrcNextSec;
-            free(toDelete);
+            p=q->sameSrcNextSec;
+            free(q);
+            q=p;
         }
+        free(q);
+        //printf("Freed %d\n",i);
     }
-    puts("OK");
 }
 
 int main(int argc, char const *argv[])
@@ -53,9 +56,13 @@ int main(int argc, char const *argv[])
     scanf("%d",&n);
     int prevStIndex=0;//上一站的下标
     int prevSecLength=0;//上一条路线的长度
-    for(int currentIndex=0;currentIndex<100;currentIndex++)
+    int processedLines=0;
+    for(int currentIndex=0;currentIndex<100&&processedLines<n;currentIndex++)
     {
-        if(prevSecLength==0)scanf("%d",&lineNo);
+        if(prevSecLength==0)
+        {
+            scanf("%d",&lineNo);
+        }
         char name[30];
         scanf("%s",name);
         int isDuplicated=0;
@@ -73,6 +80,7 @@ int main(int argc, char const *argv[])
         {
             struct section *newSection = (struct section*)malloc(sizeof(struct section));
             (*newSection).sameSrcNextSec=station[duplicatedIndex].firstSection;
+            (*newSection).srcIndex=duplicatedIndex;
             station[duplicatedIndex].firstSection=newSection;
             scanf("%f",&((*newSection).length));
             prevSecLength=(*newSection).length;
@@ -89,15 +97,27 @@ int main(int argc, char const *argv[])
             prevSecLength=(*newSection).length;
             (*newSection).sameSrcNextSec=NULL;
             (*newSection).targetIndex=-1;
+            (*newSection).srcIndex=currentIndex;
             //?if((*newSection).length!=0)(*newSection).targetIndex=currentIndex+1;
             if(prevStIndex>=0)station[prevStIndex].firstSection->targetIndex=currentIndex;//之前一站最近添加的section是firstSection
             prevStIndex=currentIndex;
         }
+        //if(processedLines==n)break;
+        if(prevSecLength==0)processedLines++;
     }
     char startStationName[30];
     char destStationName[30];
+    int startIndex=0;
+    int destIndex=0;
     scanf("%s %s",startStationName,destStationName);
+    for(int i=0;i<100&&(station[i].name[0]!=0);i++)
+    {
+        if(!strcmp(startStationName,station[i].name))startIndex=i;
+        if(!strcmp(destStationName,station[i].name))destIndex=i;
+    }
+    //printf("%s\n",station[startIndex].name);
+    //printf("%s\n",station[destIndex].name);
 
-
+    deleteStations();
     return 0;
 }
