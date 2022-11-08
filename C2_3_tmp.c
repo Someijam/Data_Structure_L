@@ -2,7 +2,7 @@
 Author:Someijam
 Date:2022/11/01
 Problem description:
-第3关：计算最短路径
+第3关：计算最短路径(不完善版本)
 */
 /*
 4
@@ -24,7 +24,6 @@ struct section//称section为两站点之间的一段线路
     float length;//长度
     int targetIndex;//这条路线指向另一端的站点
     int srcIndex;//发散出这条路线的站点
-    int isReverse;//是后来增加的逆向线路吗？
     struct section *sameSrcNextSec;//相同站点延伸出的下一条路线
 };
 
@@ -149,14 +148,13 @@ int main(int argc, char const *argv[])
         }
         if(isDuplicated)//已经有了
         {
-            struct section *newSection = (struct section*)malloc(sizeof(struct section));//新建线路
-            (*newSection).isReverse=0;
+            struct section *newSection = (struct section*)malloc(sizeof(struct section));
             (*newSection).sameSrcNextSec=station[duplicatedIndex].firstSection;
             (*newSection).srcIndex=duplicatedIndex;
-            station[duplicatedIndex].firstSection=newSection;//把新线路增加进已经存在的站点下
+            station[duplicatedIndex].firstSection=newSection;
             scanf("%f",&((*newSection).length));
             prevSecLength=(*newSection).length;
-            if(prevSecLength==0)(*newSection).length=100;//终点站
+            if(prevSecLength==0)(*newSection).length=INF;//终点站
             if(prevStIndex>=0/*避免第一个越界*/)station[prevStIndex].firstSection->targetIndex=duplicatedIndex;
             prevStIndex=duplicatedIndex;
             currentIndex--;
@@ -164,12 +162,11 @@ int main(int argc, char const *argv[])
         else//还没有
         {
             strcpy(station[currentIndex].name,name);
-            struct section *newSection = (struct section*)malloc(sizeof(struct section));//新建线路
-            (*newSection).isReverse=0;
-            station[currentIndex].firstSection=newSection;//绑定到这个站点下
+            struct section *newSection = (struct section*)malloc(sizeof(struct section));
+            station[currentIndex].firstSection=newSection;
             scanf("%f",&((*newSection).length));
             prevSecLength=(*newSection).length;
-            if(prevSecLength==0)(*newSection).length=100;//终点站
+            if(prevSecLength==0)(*newSection).length=INF;//终点站
             (*newSection).sameSrcNextSec=NULL;
             (*newSection).targetIndex=-1;
             (*newSection).srcIndex=currentIndex;
@@ -180,29 +177,6 @@ int main(int argc, char const *argv[])
         //if(processedLines==n)break;
         if(prevSecLength==0)processedLines++;
     }
-    for(int i=0;station[i].name[0]!=0;i++)stationCount++;
-    
-    for(int i=0;i<stationCount;i++)//遍历，把反向线路也加上去
-    {
-        struct section *p=station[i].firstSection;
-        do
-        {
-            struct section *newRevSec = (struct section*)malloc(sizeof(struct section));//新建反向线路
-            (*newRevSec).sameSrcNextSec=station[(*p).targetIndex].firstSection;
-            station[(*p).targetIndex].firstSection=newRevSec;
-            //反向线路绑定到当前线路指向站点的第一个线路前
-            (*newRevSec).length=(*p).length;
-            //反向线路长度等于当前线路长度
-            (*newRevSec).targetIndex=i;
-            //反向线路指向当前站点
-            (*newRevSec).srcIndex=(*p).targetIndex;
-            //反向线路的源站点为当前线路指向站点
-            (*newRevSec).isReverse=1;
-            //记录一下这是逆向的线路
-            p=p->sameSrcNextSec;
-        }while (p);
-    }
-    
     char startStationName[30];
     char destStationName[30];
     int startIndex=0;
@@ -216,8 +190,11 @@ int main(int argc, char const *argv[])
     //printf("%s\n",station[startIndex].name);
     //printf("%s\n",station[destIndex].name);
     //此处，已完成起始站点和最终站点的录入，它们在station中的下标分别为startIndex,destIndex
+    for(int i=0;station[i].name[0]!=0;i++)stationCount++;
     Dijkstra(startIndex,destIndex);
+
     printf("%f\n",distanceFromStartSt[destIndex]);
+
     deleteStations();
     return 0;
 }
