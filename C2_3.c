@@ -18,6 +18,7 @@ Problem description:
 #include<string.h>
 
 int INF=0x3F3F3F3F;
+int alongWay[50];
 
 struct section//称section为两站点之间的一段线路
 {
@@ -45,9 +46,10 @@ void calcDisFromA(int A)
     A的相邻节点是station[A].firstSection->targetIndex
     以及(*station[A].firstSection).sameSrcNextSec->targetIndex
     */
-    if(!isInShortestPath[station[A].firstSection->targetIndex])/*没被标记，处理第一条线*/
+    /*
+    if(!isInShortestPath[station[A].firstSection->targetIndex])//没被标记，处理第一条线
     {
-        if((distanceFromStartSt[A]+station[A].firstSection->length)<distanceFromStartSt[station[A].firstSection->targetIndex/*B*/])
+        if((distanceFromStartSt[A]+station[A].firstSection->length)<distanceFromStartSt[station[A].firstSection->targetIndex])
         {
             distanceFromStartSt[station[A].firstSection->targetIndex]=distanceFromStartSt[A]+station[A].firstSection->length;
             shortestPrevSt[station[A].firstSection->targetIndex]=A;
@@ -63,8 +65,21 @@ void calcDisFromA(int A)
                 distanceFromStartSt[(*secB).targetIndex]=distanceFromStartSt[A]+(*secB).length;
                 shortestPrevSt[(*secB).targetIndex]=A;
             }
+            secB=secB->sameSrcNextSec;
         }//处理后续的线
     }
+    */
+    //这俩块看看可不可以统一一下(搞好了)
+    for(struct section *p=station[A].firstSection;p;p=p->sameSrcNextSec)//p是正在检测的线路
+    {
+        if((distanceFromStartSt[A]+(*p).length)<distanceFromStartSt[(*p).targetIndex])
+        {
+            distanceFromStartSt[(*p).targetIndex]=distanceFromStartSt[A]+(*p).length;
+            shortestPrevSt[(*p).targetIndex]=A;
+        }
+    }
+
+    return;
 }
 
 void Dijkstra(int startIndex,int destIndex)
@@ -77,12 +92,14 @@ void Dijkstra(int startIndex,int destIndex)
     {
         int minDis=INF;
         int minIndex=-1;
+        /*
         for(int i=0;i<21;i++)
         {
             if(distanceFromStartSt[i]<100)printf("%d %s  \t %d \t %.2f \t %d %s\n",i,station[i].name,isInShortestPath[i],distanceFromStartSt[i],shortestPrevSt[i],station[shortestPrevSt[i]].name);
             else printf("%d %s  \t %d \t INF \t %d %s\n",i,station[i].name,isInShortestPath[i],shortestPrevSt[i],station[shortestPrevSt[i]].name);
         }
-        printf("\n");
+        */
+        //printf("\n");
         for(int i=0;i<stationCount;i++)//遍历所有未标记节点
         {
             if(isInShortestPath[i])continue;
@@ -101,6 +118,35 @@ void Dijkstra(int startIndex,int destIndex)
     }
     
 
+}
+
+void revAlongWay()//输出用，逆序数组
+{
+    int l,r;
+    l=0;
+    r=49;
+    while (alongWay[r]==-1)
+    {
+        r--;
+    }
+    while (l<r)
+    {
+        alongWay[l]=alongWay[l]+alongWay[r];
+        alongWay[r]=alongWay[l]-alongWay[r];
+        alongWay[l]=alongWay[l]-alongWay[r];
+        l++;
+        r--;
+    }
+    return;
+}
+
+float disFromTwoSt(int sta,int stb)//查找sta到stb的距离
+{
+    for(struct section *p=station[sta].firstSection;p;p=p->sameSrcNextSec)
+    {
+        if(!strcmp(station[stb].name,station[(*p).targetIndex].name))return (*p).length;
+    }
+    return INF;
 }
 
 void deleteStations()//删除整个邻接表，释放空间
@@ -181,28 +227,22 @@ int main(int argc, char const *argv[])
         if(prevSecLength==0)processedLines++;
     }
     for(int i=0;station[i].name[0]!=0;i++)stationCount++;
-    
     for(int i=0;i<stationCount;i++)//遍历，把反向线路也加上去
     {
-        struct section *p=station[i].firstSection;
-        do
+        for(struct section *p=station[i].firstSection;p;p=p->sameSrcNextSec)
         {
+            if((*p).isReverse)continue;
             struct section *newRevSec = (struct section*)malloc(sizeof(struct section));//新建反向线路
+            (*newRevSec).length=(*p).length; //反向线路长度等于当前线路长度
+            (*newRevSec).targetIndex=i; //反向线路指向当前站点
+            (*newRevSec).srcIndex=(*p).targetIndex; //反向线路的源站点为当前线路指向站点
+            (*newRevSec).isReverse=1; //记录一下这是逆向的线路
+
             (*newRevSec).sameSrcNextSec=station[(*p).targetIndex].firstSection;
             station[(*p).targetIndex].firstSection=newRevSec;
-            //反向线路绑定到当前线路指向站点的第一个线路前
-            (*newRevSec).length=(*p).length;
-            //反向线路长度等于当前线路长度
-            (*newRevSec).targetIndex=i;
-            //反向线路指向当前站点
-            (*newRevSec).srcIndex=(*p).targetIndex;
-            //反向线路的源站点为当前线路指向站点
-            (*newRevSec).isReverse=1;
-            //记录一下这是逆向的线路
-            p=p->sameSrcNextSec;
-        }while (p);
+            //反向线路(*newRevSec)绑定到当前线路(*p)指向站点的第一个线路前(左站点station[i],右站点station[(*p).targetIndex])
+        }
     }
-    
     char startStationName[30];
     char destStationName[30];
     int startIndex=0;
@@ -217,8 +257,23 @@ int main(int argc, char const *argv[])
     //printf("%s\n",station[destIndex].name);
     //此处，已完成起始站点和最终站点的录入，它们在station中的下标分别为startIndex,destIndex
     Dijkstra(startIndex,destIndex);
-    printf("%f\n",distanceFromStartSt[destIndex]);
+    //以下处理输出
+    printf("%.2f ",distanceFromStartSt[destIndex]);
+    for(int i=0;i<50;i++)alongWay[i]=-1;
+    int destIndex2=destIndex;
+    alongWay[0]=destIndex;
+    for(int i=1;i<50&&(destIndex2!=startIndex);i++)
+    {
+        alongWay[i]=shortestPrevSt[destIndex2];
+        destIndex2=alongWay[i];
+    }
+    revAlongWay();
+    for(int i=0;alongWay[i+1]!=-1;i++)
+    {
+        printf("%s %.2f ",station[alongWay[i]].name,disFromTwoSt(alongWay[i],alongWay[i+1]));
+    }
+    printf("%s",station[destIndex].name);
+    //释放空间
     deleteStations();
     return 0;
 }
-//8-9-1-10-15-16-7-17-13-3-18-19-20-11
