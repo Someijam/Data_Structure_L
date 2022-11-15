@@ -46,30 +46,6 @@ void calcDisFromA(int A)
     A的相邻节点是station[A].firstSection->targetIndex
     以及(*station[A].firstSection).sameSrcNextSec->targetIndex
     */
-    /*
-    if(!isInShortestPath[station[A].firstSection->targetIndex])//没被标记，处理第一条线
-    {
-        if((distanceFromStartSt[A]+station[A].firstSection->length)<distanceFromStartSt[station[A].firstSection->targetIndex])
-        {
-            distanceFromStartSt[station[A].firstSection->targetIndex]=distanceFromStartSt[A]+station[A].firstSection->length;
-            shortestPrevSt[station[A].firstSection->targetIndex]=A;
-        }
-    }
-    if(station[A].firstSection->sameSrcNextSec)//如果发散出的线不止一条
-    {  
-        struct section *secB=station[A].firstSection->sameSrcNextSec;
-        while ((*secB).sameSrcNextSec)//条件，发散出来的线没有走完
-        {
-            if((distanceFromStartSt[A]+(*secB).length)<distanceFromStartSt[(*secB).targetIndex])
-            {
-                distanceFromStartSt[(*secB).targetIndex]=distanceFromStartSt[A]+(*secB).length;
-                shortestPrevSt[(*secB).targetIndex]=A;
-            }
-            secB=secB->sameSrcNextSec;
-        }//处理后续的线
-    }
-    */
-    //这俩块看看可不可以统一一下(搞好了)
     for(struct section *p=station[A].firstSection;p;p=p->sameSrcNextSec)//p是正在检测的线路
     {
         if((distanceFromStartSt[A]+(*p).length)<distanceFromStartSt[(*p).targetIndex])
@@ -92,7 +68,7 @@ void Dijkstra(int startIndex,int destIndex)
     {
         int minDis=INF;
         int minIndex=-1;
-        /*
+        /*调试用，输出寻路过程
         for(int i=0;i<21;i++)
         {
             if(distanceFromStartSt[i]<100)printf("%d %s  \t %d \t %.2f \t %d %s\n",i,station[i].name,isInShortestPath[i],distanceFromStartSt[i],shortestPrevSt[i],station[shortestPrevSt[i]].name);
@@ -114,7 +90,6 @@ void Dijkstra(int startIndex,int destIndex)
         int A=minIndex;
         calcDisFromA(A);//计算刚刚标记的节点A与其相邻节点B的距离，不包含已标记的节点
         //更新B距离，条件(A～B+Length AB)< B原本到起点的最短距离
-        
     }
     
 
