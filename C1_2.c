@@ -1,98 +1,152 @@
-#include <stdio.h>
-#include <stdlib.h>
-typedef struct node
-{
-    int coef; //系数
-    int exp;  //指数
-    struct node *next;
-} node, *pStack;
+/*
+Author:Someijam
+Date:2022/11/16
+Problem description:
+1-2
+*/
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdbool.h>
 
-void input(pStack poly1, pStack poly2)//调用输入函数
+struct polyItem
 {
-    int coef, exp;
-    char ch;
-    int stackSize = 0;
-    while (scanf("%d", &coef))//系数
+    struct polyItem *prev;
+    int c;
+    int e;
+    struct polyItem *next;
+}polyHead1,polyHead2;
+
+bool exitFlag=false;
+
+void inputProcess()
+{
+    int tmpC;
+    int tmpE;
+    int i=0;
+    int cnt1=1;
+    int cnt2=1;
+    struct polyItem *lastItem=&polyHead1;
+    while(1)
     {
-        scanf("%d", &exp);//指数
-        if (stackSize >= 5)//长度限制为5
+        if(scanf("%d",&tmpC))//扫到分号会吐出来，并且返回0
+        {
+            scanf("%d",&tmpE);
+            struct polyItem *newItem = (struct polyItem *)malloc(sizeof(struct polyItem));
+            (*newItem).c=tmpC;
+            (*newItem).e=tmpE;
+            (*newItem).next=NULL;
+            cnt1++;
+            (*lastItem).next=newItem;
+            (*newItem).prev=lastItem;
+            lastItem=newItem;
+        }
+        else break;
+        if(cnt1>6)
         {
             printf("Full!");
-            exit(0);
+            exitFlag=true;
+            return;
         }
-        node *newItem = (node *)malloc(sizeof(node));
-        (*newItem).coef = coef;
-        (*newItem).exp = exp;
-        (*newItem).next = (*poly1).next;
-        (*poly1).next = newItem;
-        stackSize++;
     }
-    scanf("%c", &ch);
-    stackSize = 0;
-    while (scanf("%d", &coef) != EOF)
+    char useless;
+    scanf("%c",&useless);
+    lastItem=&polyHead2;
+    while (scanf("%d",&tmpC)!=EOF)
     {
-        scanf("%d", &exp);
-        if (stackSize >= 5)
-        {
-            printf("Full!");
-            exit(0);
-        }
-        node *newItem = (node *)malloc(sizeof(node));
-        (*newItem).coef = coef;
-        (*newItem).exp = exp;
-        (*newItem).next = (*poly2).next;
-        (*poly2).next = newItem;
-        stackSize++;
+        scanf("%d",&tmpE);
+        struct polyItem *newItem = (struct polyItem *)malloc(sizeof(struct polyItem));
+        (*newItem).c=tmpC;
+        (*newItem).e=tmpE;
+        (*newItem).next=NULL;
+        cnt2++;
+        (*lastItem).next=newItem;
+        (*newItem).prev=lastItem;
+        lastItem=newItem;  
     }
+    if(cnt2>6)
+    {
+        printf("Full!");
+        exitFlag=true;
+        return;
+    }
+    return;
 }
 
-void printAndFree(pStack poly1, pStack poly2)
+void printProcess()
 {
-    node *itemToPop, *s;
-    while ((*poly1).next && (*poly2).next)
+    struct polyItem *p1=&polyHead1;
+    struct polyItem *p2=&polyHead2;
+    while(p1->next)p1=p1->next;
+    while(p2->next)p2=p2->next;
+    while (1)
     {
-        if (((*poly1).next->exp) > ((*poly2).next->exp))
-        {
-            itemToPop = (*poly1).next;
-            (*poly1).next = (*itemToPop).next;
+        if(p1!=&polyHead1&&p2!=&polyHead2)//还没到头，谁大输出谁
+        {   
+            if((*p1).e>(*p2).e)
+            {
+                printf("%d %d ",p1->c,p1->e);
+                p1=p1->prev;
+                free(p1->next);
+            }
+            else 
+            {
+                printf("%d %d ",p2->c,p2->e);
+                p2=p2->prev;
+                free(p2->next);
+            }
         }
-        else
+        else if(p1==&polyHead1)
         {
-            itemToPop = (*poly2).next;
-            (*poly2).next = (*itemToPop).next;
+            while (p2!=&polyHead2)
+            {
+                printf("%d %d ",p2->c,p2->e);
+                p2=p2->prev;
+                free(p2->next);
+            }
+            break;
         }
-        printf("%d %d ", (*itemToPop).coef, (*itemToPop).exp);
-        free(itemToPop);
+        else if(p2==&polyHead2)
+        {
+            while (p1!=&polyHead1)
+            {
+                printf("%d %d ",p1->c,p1->e);
+                p1=p1->prev;
+                free(p1->next);
+            }
+            break;
+        }
     }
-    if ((*poly1).next == NULL)
-    {
-        while ((*poly2).next != NULL)
-        {
-            itemToPop = (*poly2).next;
-            (*poly2).next = (*itemToPop).next;
-            printf("%d %d ", (*itemToPop).coef, (*itemToPop).exp);
-            free(itemToPop);
-        }
-    }
-    else if ((*poly2).next == NULL)
-    {
-        while ((*poly2).next != NULL)
-        {
-            itemToPop = (*poly1).next;
-            (*poly1).next = (*itemToPop).next;
-            printf("%d %d ", (*itemToPop).coef, (*itemToPop).exp);
-            free(itemToPop);
-        }
-    }
+    return;
 }
-
-int main()
+/*
+void deleteProcess()
 {
-    pStack poly1 = (pStack)malloc(sizeof(node));
-    pStack poly2 = (pStack)malloc(sizeof(node));
-    poly1->next = NULL;
-    poly2->next = NULL;
-    input(poly1, poly2);
-    printAndFree(poly1, poly2);
+    struct polyItem *p=&polyHead1;
+    while (p->next)
+    {
+        p=p->next;
+        struct polyItem *q=p->prev;
+        if(q!=&polyHead1)free(q);
+    }
+    free(p);
+
+    p=&polyHead2;
+    while (p->next)
+    {
+        p=p->next;
+        struct polyItem *q=p->prev;
+        if(q!=&polyHead2)
+            free(q);
+    }
+    free(p);
+    return;
+}
+*/
+int main(int argc, char const *argv[])
+{
+    inputProcess();
+    if(exitFlag)return 0;
+    printProcess();
+    //deleteProcess();
     return 0;
 }

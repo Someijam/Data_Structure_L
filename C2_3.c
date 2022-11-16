@@ -34,7 +34,7 @@ struct station//称station为站点
     char name[30];//站点名字
     struct section *firstSection;//站点发散出的第一条路线
 }station[50];//全局存储图
-int stationCount=0;
+int stationCount=0;//总共站点数，遍历用
 
 float distanceFromStartSt[50];//认为这里存的是所有点到出发点的最短距离，会被逐渐更新
 int shortestPrevSt[50];//最短路径中每一个节点前面的节点，例如从某点到station[5]的最短路径为……1-4-5，那么shortestPrevSt[5]=4;
