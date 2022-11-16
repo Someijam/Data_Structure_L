@@ -10,15 +10,19 @@ Problem description:
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<assert.h>
 #include<stdbool.h>
 struct polyItem
 {
     float c;
     int e;
-}poly1[100],poly2[100];
+}poly1[100],poly2[100],polySum[100];
 bool opPlus=true;
 int cnt1=0;
 int cnt2=0;
+int cntSum=0;
+int printSum=0;
+bool containsNeg=false;
 void polySwap(int polyNo,int i,int j)
 {
     //polyNo[i,j].c,e
@@ -74,9 +78,9 @@ void sortProcess()//都改为降幂
             }
         }
     }
-    for(int i=0;i<cnt1-1;i++)
+    for(int i=0;i<cnt2-1;i++)
     {
-        for(int j=i+1;j<cnt1;j++)
+        for(int j=i+1;j<cnt2;j++)
         {
             if(poly2[i].e<poly2[j].e)
             {
@@ -87,10 +91,61 @@ void sortProcess()//都改为降幂
     return;
 }
 
+void calcProcess()
+{
+    for(int i=0,j=0;i<cnt1&&j<cnt2;cntSum++)
+    {
+        if(poly1[i].e>poly2[j].e)
+        {
+            polySum[cntSum].e=poly1[i].e;
+            polySum[cntSum].c=poly1[i].c;
+            if(polySum[cntSum].c<0)containsNeg=true;
+            i++;
+        }
+        else if(poly1[i].e<poly2[j].e)
+        {
+            polySum[cntSum].e=poly2[j].e;
+            if(opPlus)polySum[cntSum].c=poly2[j].c;
+            else polySum[cntSum].c=-poly2[j].c;
+            if(polySum[cntSum].c<0)containsNeg=true;
+            j++;
+        }
+        else if(poly1[i].e==poly2[j].e)
+        {
+            assert(poly1[i].e==poly2[j].e);
+            polySum[cntSum].e=poly1[i].e;
+            if(opPlus)polySum[cntSum].c=poly1[i].c+poly2[j].c;
+            else polySum[cntSum].c=poly1[i].c-poly2[j].c;
+            if(polySum[cntSum].c<0)containsNeg=true;
+            i++;
+            j++;
+        }
+    }
+    return;
+}
+
+void printProcess()
+{
+    if(containsNeg)cntSum++;
+    for(int i=0;i<cntSum;i++)
+    {
+        if(polySum[i].c==0&&polySum[i].e!=0)continue;
+        else 
+        {
+            if(printSum!=0&&polySum[i].c==0&&polySum[i].e==0)continue;
+            printf("%g %d ",polySum[i].c,polySum[i].e);
+            printSum++;
+        }
+    }
+    if(printSum==0)printf("0 0");
+    return;
+}
+
 int main(int argc, char const *argv[])
 {
     inputProcess();
     sortProcess();
-
+    calcProcess();
+    printProcess();
     return 0;
 }
