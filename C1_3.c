@@ -6,6 +6,7 @@ Problem description:
 */
 /*
 6 -3 -1 1 4.4 2 -1.2 9 - -6 -3 5.4 2 7.8 15
+0 0 + 1 -1 1 3
 */
 #include<stdio.h>
 #include<stdlib.h>
@@ -93,16 +94,16 @@ void sortProcess()//都改为降幂
 
 void calcProcess()
 {
-    for(int i=0,j=0;i<cnt1&&j<cnt2;cntSum++)
+    for(int i=0,j=0;i+j<cnt1+cnt2;cntSum++)
     {
-        if(poly1[i].e>poly2[j].e)
+        if((poly1[i].e>poly2[j].e)&&i<cnt1)
         {
             polySum[cntSum].e=poly1[i].e;
             polySum[cntSum].c=poly1[i].c;
             if(polySum[cntSum].c<0)containsNeg=true;
             i++;
         }
-        else if(poly1[i].e<poly2[j].e)
+        else if((poly1[i].e<poly2[j].e)&&j<cnt2)
         {
             polySum[cntSum].e=poly2[j].e;
             if(opPlus)polySum[cntSum].c=poly2[j].c;
@@ -119,6 +120,31 @@ void calcProcess()
             if(polySum[cntSum].c<0)containsNeg=true;
             i++;
             j++;
+        }
+        else if(i>=cnt1)//第一个人加完了
+        {
+            while (j<cnt2)
+            {
+                polySum[cntSum].e=poly2[j].e;
+                if(opPlus)polySum[cntSum].c=poly2[j].c;
+                else polySum[cntSum].c=-poly2[j].c;
+                if(polySum[cntSum].c<0)containsNeg=true;
+                j++;
+                cntSum++;
+            }
+            cntSum--;
+        }
+        else if(j>=cnt2)//第二个人加完了
+        {
+            while (i<cnt1)
+            {
+                polySum[cntSum].e=poly1[i].e;
+                polySum[cntSum].c=poly1[i].c;
+                if(polySum[cntSum].c<0)containsNeg=true;
+                i++;
+                cntSum++;
+            }
+            cntSum--;
         }
     }
     return;
