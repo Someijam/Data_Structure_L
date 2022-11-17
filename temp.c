@@ -9,15 +9,8 @@ temp
 #include<string.h>
 int main(int argc, char const *argv[])
 {
-    char tempNum[20];
-    float c;
-    int e;
-    while (scanf("%s",tempNum)&&strcpy(tempNum,"+")&&strcpy(tempNum,"-"))
-    {
-        c=atof(tempNum);
-        scanf("%d",&e);
-        printf("%f\n",c);
-        printf("%d\n",e);
-    }
+    char tempNum[20];//="dadada";
+    gets(tempNum);
+    printf("%lu",strlen(tempNum));
     return 0;
 }
