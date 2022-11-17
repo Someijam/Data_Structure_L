@@ -17,7 +17,7 @@ c1x^e1±c2x^e2±...±cnx^en1
 
 x+x^3
 -x +4.4x^2 +6x^-3 -1.2x^9\0
-i  i   j   i      i
+ij i   j   i j    i   j
 特殊情况：
 ‘+’或者‘-’后面跟着‘x’，系数绝对值为1
 ‘x’后面不是‘^‘，指数为1
@@ -37,9 +37,13 @@ while(polyStr[j]是数字或者点)j++;
 1        ,(polyStr[i+1]=='x')
 
 3.找指数
-k=j;
-while(polyStr[k])
+if [j+1]=='^'
+    [k+2]不是指数的负号就是数字， k从 [j+3]往后找，until [k] 不是数字
+    e=[j+2,k-1];
+if [j+1]!='^'
+    e=1;
 
+4.存数据，引用数据，计数
 
 */
 #include<stdio.h>
