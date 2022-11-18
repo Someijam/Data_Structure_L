@@ -18,6 +18,9 @@ c1x^e1±c2x^e2±...±cnx^en1
 x+x^3
 -x +4.4x^2 +6x^-3 -1.2x^9\0
 ij i   j   i j    i   j
+           k     k       k
++1+x
+i j
 特殊情况：
 ‘+’或者‘-’后面跟着‘x’，系数绝对值为1
 ‘x’后面不是‘^‘，指数为1
@@ -55,7 +58,7 @@ if [j+1]!='^'
 #include<math.h>
 struct polyItem
 {
-    float c;
+    double c;
     int e;
 }poly1[100],poly2[100],polySum[100];
 struct fullItem
@@ -103,7 +106,7 @@ void inputProcess()
 {
     gets(phrases);
     int opSignPos=0;
-    for(int i=0;i<strlen(phrases);i++)
+    for(int i=0;i<strlen(phrases)-1;i++)
     {
         if((phrases[i]=='+'||phrases[i]=='-')&&phrases[i-1]==')'&&phrases[i+1]=='(')//i指向两个表达式运算符
         {
@@ -112,22 +115,30 @@ void inputProcess()
             break;
         }
     }
-    for(int j=1;j<=opSignPos-2;j++)polyStr1[j-1]=phrases[j];
-    for(int j=opSignPos+2;j<=strlen(phrases)-2;j++)polyStr2[j-opSignPos-2]=phrases[j];
+    
+    if(phrases[1]=='-')for(int j=1;j<=opSignPos-2;j++)polyStr1[j-1]=phrases[j];
+    else 
+    {
+        for(int j=0;j<=opSignPos-2;j++)polyStr1[j]=phrases[j];
+        polyStr1[0]='+';
+    }
+    if(phrases[opSignPos+2]=='-')for(int j=opSignPos+2;j<=strlen(phrases)-2;j++)polyStr2[j-opSignPos-2]=phrases[j];
+    else
+    {
+        for(int j=opSignPos+1;j<=strlen(phrases)-2;j++)polyStr2[j-opSignPos-1]=phrases[j];
+        polyStr2[0]='+';
+    }
     //把无意义的括号去掉，两端表达式分开到两个字符串中
-    for(int i=0;i<strlen(polyStr1);)//处理第一个多项式,循环一次处理一项
+    for(int i=0;i<strlen(polyStr1)-1;)//处理第一个多项式,循环一次处理一项,！终止条件有误
     {
         struct fullItem temp;
+        temp.signNeg=false;
         bool isItemReady=false;
         if((i==0)||(polyStr1[i]=='+')||((polyStr1[i]=='-')&&((i==1)||(polyStr1[i-1]!='^'))))//到达一项的开头
         {
             int j=i+1;
-            if(polyStr1[i]=='-')temp.signNeg=true;
-            else 
-            {
-                temp.signNeg=false;//定符号
-                if(i==0)j=i;
-            }
+            if(polyStr1[i]=='-')
+                temp.signNeg=true;
             while (('0'<=polyStr1[j]&&polyStr1[j]<='9')||polyStr1[j]=='.')j++;//j到'x'了
             char tempAbs[20]={0};
             //|c|=[i+1(i!=0),j-1]
@@ -143,8 +154,10 @@ void inputProcess()
             }//找系数
             if(polyStr1[j+1]!='^')
             {
-                temp.exp=1;
-                i=j+1;
+                if(polyStr1[j]!='x')temp.exp=0;
+                else temp.exp=1;
+                if(polyStr1[j]=='+'||polyStr1[j]=='-')i=j;
+                else i=j+1;
             }
             else 
             {
@@ -177,19 +190,15 @@ void inputProcess()
         //把这一项添加到poly1中
     }
     //下面处理第二个
-    for(int i=0;i<strlen(polyStr2);)//处理第一个多项式,循环一次处理一项
+    for(int i=0;i<strlen(polyStr2);)//处理第二个多项式,循环一次处理一项
     {
         struct fullItem temp;
+        temp.signNeg=false;
         bool isItemReady=false;
         if((i==0)||(polyStr2[i]=='+')||((polyStr2[i]=='-')&&((i==1)||(polyStr2[i-1]!='^'))))//到达一项的开头
         {
             int j=i+1;
             if(polyStr2[i]=='-')temp.signNeg=true;
-            else 
-            {
-                temp.signNeg=false;//定符号
-                if(i==0)j=i;
-            }
             while (('0'<=polyStr2[j]&&polyStr2[j]<='9')||polyStr2[j]=='.')j++;
             char tempAbs[20]={0};
             if(polyStr2[i+1]!='x')
@@ -204,8 +213,10 @@ void inputProcess()
             }//找系数
             if(polyStr2[j+1]!='^')
             {
-                temp.exp=1;
-                i=j+1;
+                if(polyStr2[j]!='x')temp.exp=0;
+                else temp.exp=1;
+                if(polyStr2[j]=='+'||polyStr2[j]=='-')i=j;
+                else i=j+1;
             }
             else 
             {
@@ -321,6 +332,18 @@ void calcProcess()
             cntSum--;
         }
     }
+    for(int i=0;i<cntSum-1;i++)
+    {
+        for(int j=i+1;j<cntSum;j++)
+        {
+            if(polySum[i].e==polySum[j].e&&polySum[j].e!=0)
+            {
+                polySum[i].c+=polySum[j].c;
+                polySum[j].e=0;
+                polySum[j].c=0;
+            }
+        }
+    }
     return;
 }
 
@@ -329,19 +352,27 @@ void printProcess()
     if(containsNeg)cntSum++;
     for(int i=0;i<cntSum;i++)
     {
-        if(polySum[i].c==0&&polySum[i].e!=0)continue;//系数为0省略此项
+        if(polySum[i].c==0&&polySum[i].e!=0)
+            continue;//系数为0省略此项
         else 
         {
-            if(printSum!=0&&polySum[i].c==0&&polySum[i].e==0)continue;//值为0省略此项
+            //if(fabs(polySum[i].c)!=1)printf("*%lf*",fabs(polySum[i].c));
+            if(printSum!=0&&polySum[i].c==0)
+                continue;//值为0省略此项
             //printf("%g %d ",polySum[i].c,polySum[i].e);
-            if(polySum[i].c>0&&printSum!=0)printf("+");//正系数并且不是第一个，要输出加号
-            if(polySum[i].c<0)printf("-");
-            if(fabsf(polySum[i].c)!=1)//polySum[i].c的绝对值不为1
+            if(polySum[i].c>0&&printSum!=0)
+                printf("+");//正系数并且不是第一个，要输出加号
+            if(polySum[i].c<0)
+                printf("-");
+            if((fabs(polySum[i].c)!=1)||(fabs(fabs(polySum[i].c)-1)<0.001&&polySum[i].e==0))//polySum[i].c的绝对值不为1
                 printf("%g",fabs(polySum[i].c));//系数绝对值为1不输出系数绝对值
-            if(polySum[i].e!=1&&polySum[i].e!=0)printf("x^%d",polySum[i].e);//指数为1不输出指数
-            else if(polySum[i].e==1)printf("x");
+            if(polySum[i].e!=1&&polySum[i].e!=0)
+                printf("x^%d",polySum[i].e);//指数为1不输出指数
+            else if(polySum[i].e==1)
+                printf("x");
             //指数为0只输出系数
             printSum++;
+            //printf("\n");
         }
     }
     if(printSum==0)printf("0");
@@ -358,3 +389,6 @@ int main(int argc, char const *argv[])
 }
 //-7.8x^15-1.2x^9 -1x^2 -x +12x^-3
 //-7.8x^15-1.2x^9 -x^2  -x +12x^-3
+//(-x+4.4x^2+6x^-3-1.2x^9)-(5.4x^2-6x^-3+7.8x^15)
+//(c!=1||())
+//(fabs(polySum[i].c)!=1)||(fabs(fabs(polySum[i].c)-1)<0.001&&polySum[i].e==0)
